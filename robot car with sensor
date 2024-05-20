@@ -1,0 +1,108 @@
+#include <Servo.h>
+
+#define TRIG_PIN 12
+#define ECHO_PIN 11
+#define IN1 2
+#define IN2 3
+#define IN3 7
+#define IN4 8
+#define SERVO_PIN 10
+
+Servo servoMotor;
+
+void setup() {
+  pinMode(TRIG_PIN, OUTPUT);
+  pinMode(ECHO_PIN, INPUT);
+  pinMode(IN1, OUTPUT);
+  pinMode(IN2, OUTPUT);
+  pinMode(IN3, OUTPUT);
+  pinMode(IN4, OUTPUT);
+  
+  servoMotor.attach(SERVO_PIN);
+  servoMotor.write(90); // Set servo to the center position
+  delay(1000);
+}
+
+long measureDistance() {
+  long duration, distance;
+  digitalWrite(TRIG_PIN, LOW);
+  delayMicroseconds(2);
+  digitalWrite(TRIG_PIN, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(TRIG_PIN, LOW);
+  
+  duration = pulseIn(ECHO_PIN, HIGH);
+  distance = duration * 0.034 / 2; // Calculate the distance in cm
+  
+  return distance;
+}
+
+void moveForward() {
+  digitalWrite(IN1, HIGH);
+  digitalWrite(IN2, LOW);
+  digitalWrite(IN3, LOW);
+  digitalWrite(IN4, HIGH);
+}
+
+void moveBackward() {
+  digitalWrite(IN1, LOW);
+  digitalWrite(IN2, HIGH);
+  digitalWrite(IN3, HIGH);
+  digitalWrite(IN4, LOW);
+}
+
+
+    
+    // Look right
+    servoMotor.write(180);
+    delay(500);
+    long distanceRight = measureDistance();
+    
+    // Reset servo to center
+    servoMotor.write(90);void stopMotors() {
+  digitalWrite(IN1, LOW);
+  digitalWrite(IN2, LOW);
+  digitalWrite(IN3, LOW);
+  digitalWrite(IN4, LOW);
+}
+
+void loop() {
+  long distance = measureDistance();
+  
+  if (distance < 20) { // If an object is detected within 20cm
+    stopMotors(); // Stop the car immediately
+    
+    // Step back
+    moveBackward();
+    delay(500);
+    stopMotors();
+    
+    // Look left
+    servoMotor.write(0);
+    delay(500);
+    long distanceLeft = measureDistance();
+    
+    // Choose direction with more space
+    if (distanceLeft > distanceRight) {
+      // Turn left
+      digitalWrite(IN1, HIGH);
+      digitalWrite(IN2, LOW);
+      digitalWrite(IN3, HIGH);
+      digitalWrite(IN4, LOW);
+      delay(250); // Adjust this delay for a proper turn
+    } else {
+      // Turn right
+      digitalWrite(IN1, LOW);
+      digitalWrite(IN2, HIGH);
+      digitalWrite(IN3, LOW);
+      digitalWrite(IN4, HIGH);
+      delay(250); // Adjust this delay for a proper turn
+    }
+
+    // Move forward immediately after the turn
+    moveForward();
+  } else {
+    // No obstacle, continue forward
+    moveForward();
+  }
+}
